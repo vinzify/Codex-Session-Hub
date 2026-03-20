@@ -1,126 +1,95 @@
 <div align="center">
   <img src="banner.png" width="800" alt="Codex Session Hub Banner" />
   <h1>Codex Session Hub</h1>
-  <p><strong>A blazing fast, <code>fzf</code>-powered PowerShell 7 CLI for browsing and managing Codex CLI sessions.</strong></p>
+  <p><strong>An <code>fzf</code>-powered PowerShell 7 CLI for browsing, resuming, renaming, and deleting Codex CLI sessions across projects.</strong></p>
   
   <p>
     <a href="https://learn.microsoft.com/en-us/powershell/"><img src="https://img.shields.io/badge/Built_with-PowerShell_7-blue?style=flat-square" alt="Built with PowerShell 7"></a>
     <a href="https://github.com/junegunn/fzf"><img src="https://img.shields.io/badge/Powered_by-fzf-orange?style=flat-square" alt="Powered by fzf"></a>
-    <a href="https://github.com/vinzify/Codex-Session-Hub/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square" alt="License: MIT"></a>
+    <a href="https://github.com/vinzify/Codex-Session-Hub/blob/master/LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square" alt="License: MIT"></a>
   </p>
 </div>
 
-Codex Session Hub transforms the way you manage and resume your Codex CLI sessions. It provides an `fzf`-powered interface right in your terminal, allowing you to instantly browse and resume sessions across all your projects without ever needing to manually change directories.
+Codex Session Hub gives Codex CLI a global session browser. Instead of opening a project first and then running `codex resume`, you can launch one command, search every session on your machine, preview context, and jump back into the right folder immediately.
 
-## ✨ Features
+## Why It Exists
 
-* **Universal Browse:** Access your Codex sessions across all projects from one powerful command.
-* **Smart Resume:** Select a session and instantly resume it in the correct project directory.
-* **Persistent Aliases (Rename):** Give your auto-generated sessions meaningful names that stick, so you know exactly what you were working on.
-* **Bulk Operations:** Multi-select sessions using `fzf` and bulk delete them without breaking a sweat.
-* **Rich Context Previews:** View project summaries and detailed session information in a sleek side pane while browsing.
-* **Cross-Platform Compatibility:** Runs flawlessly on PowerShell 7+ whether you are on Windows, macOS, or Linux.
+- Browse Codex sessions across all projects from one command
+- Resume directly into the correct project directory
+- Rename sessions with persistent aliases
+- Multi-select and delete sessions in bulk
+- Preview project and session context before resuming
+- Works on Windows, macOS, and Linux with PowerShell 7
 
-## 🚀 Installation
+## Quick Start
 
-### Requirements
+```powershell
+irm https://raw.githubusercontent.com/vinzify/Codex-Session-Hub/master/install.ps1 | iex
+. $PROFILE
+csx
+```
 
-Before getting started, make sure you have:
-* **[PowerShell 7+](https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell)** installed.
-* **Codex CLI** available in your `PATH`.
-* **[fzf](https://github.com/junegunn/fzf)** installed and available in your `PATH`.
+## Requirements
 
-#### Getting `fzf`
-* **Windows:** `winget install junegunn.fzf`, `choco install fzf`, or `scoop install fzf`
-* **macOS:** `brew install fzf`
-* **Linux:** Install via `apt`, `dnf`, `pacman`, or `zypper` depending on your distro.
+Before installing, make sure you have:
+- [PowerShell 7+](https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell)
+- Codex CLI in `PATH`
+- [`fzf`](https://github.com/junegunn/fzf) in `PATH`
 
-### One-Line Install
+Install `fzf`:
+- Windows: `winget install junegunn.fzf`, `choco install fzf`, or `scoop install fzf`
+- macOS: `brew install fzf`
+- Linux: install with your distro package manager
 
-This is the recommended install path for normal users once the repository is public:
+## Install
+
+Recommended:
 
 ```powershell
 irm https://raw.githubusercontent.com/vinzify/Codex-Session-Hub/master/install.ps1 | iex
 ```
 
-What it does:
-* Downloads the current project source from GitHub
-* Installs it into your user-local app directory
-* Wires `csx` into your PowerShell profile
-* Leaves your cloned repos untouched
-
-Default install locations:
-* **Windows:** `%LOCALAPPDATA%\CodexSessionHub`
-* **macOS / Linux:** `~/.local/share/codex-session-hub`
-
-After install:
+Then reload your shell:
 
 ```powershell
 . $PROFILE
 csx doctor
 ```
 
-### From Source
+Default install locations:
+- Windows: `%LOCALAPPDATA%\CodexSessionHub`
+- macOS / Linux: `~/.local/share/codex-session-hub`
 
-Use this path if you want to contribute or run directly from a working tree.
+From source:
 
-1. **Clone** the repository:
-   ```powershell
-   git clone https://github.com/vinzify/Codex-Session-Hub.git
-   cd Codex-Session-Hub
-   ```
-2. **Run** the install script:
-   ```powershell
-   pwsh -File .\install.ps1
-   ```
-3. **Reload** your shell profile:
-   ```powershell
-   . $PROFILE
-   ```
-4. Run `csx`.
+```powershell
+git clone https://github.com/vinzify/Codex-Session-Hub.git
+cd Codex-Session-Hub
+pwsh -File .\install.ps1
+. $PROFILE
+```
 
-### Uninstall
-
-If you used the one-line install:
+Uninstall:
 
 ```powershell
 irm https://raw.githubusercontent.com/vinzify/Codex-Session-Hub/master/uninstall.ps1 | iex
 ```
 
-If you installed from a local checkout:
+## Usage
+
+Main commands:
 
 ```powershell
-pwsh -File .\uninstall.ps1
-```
-
-## 💻 Usage & Commands
-
-The main command for Codex Session Hub is `csx`.
-
-```powershell
-# Open the fzf browser for all sessions
 csx
 csx browse
-
-# Open the browser filtered by a specific project name
 csx browse desktop
-
-# Rename a specific session to a friendly alias
 csx rename <session-id> --name "My friendly alias"
-
-# Revert a session's title back to the auto-generated one
 csx reset <session-id>
-
-# Delete a session by its ID
 csx delete <session-id>
-
-# Run a system check to verify dependencies and paths
 csx doctor
 ```
 
-### ⌨️ Browser Controls (`csx` / `csx browse`)
-
-Once inside the `fzf` interface, you have access to powerful shortcuts:
+Browser controls:
 
 | Key Binding | Action |
 | --- | --- |
@@ -131,16 +100,14 @@ Once inside the `fzf` interface, you have access to powerful shortcuts:
 | `Ctrl-R` | Reset the focused session's title |
 | `Esc` / `Ctrl-C` | Exit the browser |
 
-### 🔍 Search Filtering
+Search filters:
+- Text query: folder or project name
+- Number query: session number prefix
+- `title:<term>` or `t:<term>`: session title or alias
 
-While in the browser, you can filter your sessions with special syntax:
-* **Text query:** Filters by folder/project name (default)
-* **Number query:** Filters by session number prefix
-* **`title:<term>`** or **`t:<term>`**: Filters specifically by the session title/alias
+## Configuration
 
-## ⚙️ Configuration
-
-Codex Session Hub supports customization through optional environment variables:
+Optional environment variables:
 
 | Variable | Description |
 | --- | --- |
@@ -148,7 +115,7 @@ Codex Session Hub supports customization through optional environment variables:
 | `CODEX_SESSION_HUB_CONFIG_ROOT` | Override the default location for configuration files. |
 | `CODEX_SESSION_HUB_FZF_OPTS` | Add custom options to the `fzf` command. |
 
-## 🛠️ Development
+## Development
 
 Tests are written using [Pester](https://pester.dev/). To run the test suite:
 
@@ -157,12 +124,6 @@ Import-Module Pester -MinimumVersion 5.0 -Force
 Invoke-Pester -Path .\tests
 ```
 
----
----
-**License:** [MIT](LICENSE)
+## License
 
----
-💖 **Support the Project**
-
-If Codex Session Hub saves you time and you want to support its continued development, consider sending an ETH donation:
-`0xe7043f731a2f36679a676938e021c6B67F80b9A1`
+[MIT](LICENSE)

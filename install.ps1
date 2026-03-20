@@ -40,8 +40,26 @@ function Resolve-CshSourceRoot {
         [Parameter(Mandatory = $true)][string]$Ref
     )
 
-    $localRoot = Split-Path -Parent $PSCommandPath
-    if (Test-CshRepoRoot -Path $localRoot) {
+    $scriptPath = ''
+
+    $psCommandPathVariable = Get-Variable -Name PSCommandPath -Scope Script -ErrorAction SilentlyContinue
+    if ($psCommandPathVariable -and -not [string]::IsNullOrWhiteSpace([string]$psCommandPathVariable.Value)) {
+        $scriptPath = [string]$psCommandPathVariable.Value
+    }
+
+    if ([string]::IsNullOrWhiteSpace($scriptPath) -and $MyInvocation -and $MyInvocation.MyCommand) {
+        $pathProperty = $MyInvocation.MyCommand.PSObject.Properties['Path']
+        if ($pathProperty -and -not [string]::IsNullOrWhiteSpace([string]$pathProperty.Value)) {
+            $scriptPath = [string]$pathProperty.Value
+        }
+    }
+
+    $localRoot = ''
+    if (-not [string]::IsNullOrWhiteSpace($scriptPath)) {
+        $localRoot = Split-Path -Parent $scriptPath
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($localRoot) -and (Test-CshRepoRoot -Path $localRoot)) {
         return [pscustomobject]@{
             Root        = $localRoot
             Temporary   = $false

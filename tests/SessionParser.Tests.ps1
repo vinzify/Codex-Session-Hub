@@ -1,8 +1,6 @@
-$here = Split-Path -Parent $MyInvocation.MyCommand.Path
-
 Describe 'Normalize-CshPath' {
     BeforeAll {
-        . (Join-Path $here 'TestBootstrap.ps1')
+        . (Join-Path $PSScriptRoot 'TestBootstrap.ps1')
     }
 
     It 'removes the Windows long path prefix' {

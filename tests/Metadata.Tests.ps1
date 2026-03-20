@@ -1,8 +1,6 @@
-$here = Split-Path -Parent $MyInvocation.MyCommand.Path
-
 Describe 'Index metadata' {
     BeforeAll {
-        . (Join-Path $here 'TestBootstrap.ps1')
+        . (Join-Path $PSScriptRoot 'TestBootstrap.ps1')
     }
 
     It 'stores aliases in memory' {

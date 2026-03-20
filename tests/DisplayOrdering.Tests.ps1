@@ -1,8 +1,6 @@
-$here = Split-Path -Parent $MyInvocation.MyCommand.Path
-
 Describe 'Display ordering' {
     BeforeAll {
-        . (Join-Path $here 'TestBootstrap.ps1')
+        . (Join-Path $PSScriptRoot 'TestBootstrap.ps1')
     }
 
     It 'returns sessions in grouped display order' {

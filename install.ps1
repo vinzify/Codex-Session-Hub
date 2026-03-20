@@ -125,19 +125,20 @@ function Install-CshShellIntegration {
     $modulePath = (Join-Path $InstalledRoot 'src/CodexSessionHub.psd1').Replace("'", "''")
     $markerStart = '# >>> Codex Session Hub >>>'
     $markerEnd = '# <<< Codex Session Hub <<<'
-    $block = @"
+    $blockTemplate = @'
 # >>> Codex Session Hub >>>
-\$cshFzfPath = Join-Path \$env:LOCALAPPDATA 'Programs\fzf\bin'
-if ((Test-Path \$cshFzfPath) -and ((\$env:Path -split ';') -notcontains \$cshFzfPath)) {
-    \$env:Path = "\$cshFzfPath;\$env:Path"
+$cshFzfPath = Join-Path $env:LOCALAPPDATA 'Programs\fzf\bin'
+if ((Test-Path $cshFzfPath) -and (($env:Path -split ';') -notcontains $cshFzfPath)) {
+    $env:Path = "$cshFzfPath;$env:Path"
 }
 function csx {
-    Import-Module '$modulePath' -Force
-    Invoke-CsxCli -Arguments \$args -ShellMode
+    Import-Module '{0}' -Force
+    Invoke-CsxCli -Arguments $args -ShellMode
 }
 Set-Alias cxs csx
 # <<< Codex Session Hub <<<
-"@
+'@
+    $block = $blockTemplate -f $modulePath
 
     $content = if (Test-Path $profilePath) { Get-Content -Path $profilePath -Raw } else { '' }
     $pattern = [regex]::Escape($markerStart) + '.*?' + [regex]::Escape($markerEnd)

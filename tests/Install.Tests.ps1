@@ -18,4 +18,15 @@ Describe 'install.ps1 bootstrap mode' {
             }
         }
     }
+
+    It 'defines shell integration as a literal template' {
+        $projectRoot = Split-Path -Parent $PSScriptRoot
+        $installScriptPath = Join-Path $projectRoot 'install.ps1'
+        $scriptContent = Get-Content -Path $installScriptPath -Raw
+
+        $scriptContent | Should -Match '\$blockTemplate = @'''
+        $scriptContent | Should -Match "Join-Path [`$]env:LOCALAPPDATA 'Programs\\fzf\\bin'"
+        $scriptContent | Should -Match 'Invoke-CsxCli -Arguments \$args -ShellMode'
+        $scriptContent | Should -Match '\$block = \$blockTemplate -f \$modulePath'
+    }
 }

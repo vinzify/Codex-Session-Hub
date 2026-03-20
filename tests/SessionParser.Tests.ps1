@@ -1,9 +1,10 @@
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 $projectRoot = Split-Path -Parent $here
-$module = Import-Module (Join-Path $projectRoot 'src/CodexSessionHub.psd1') -Force -PassThru
+$modulePath = Join-Path $projectRoot 'src/CodexSessionHub.psd1'
 
 Describe 'Normalize-CshPath' {
     It 'removes the Windows long path prefix' {
+        $module = Import-Module $modulePath -Force -PassThru
         $bound = $module.NewBoundScriptBlock({ Normalize-CshPath '\\?\D:\code\example' })
         (& $bound) | Should Be 'D:\code\example'
     }
@@ -11,6 +12,7 @@ Describe 'Normalize-CshPath' {
 
 Describe 'Get-CshFilteredDisplaySessions' {
     It 'treats quote-only queries as empty' {
+        $module = Import-Module $modulePath -Force -PassThru
         $sessions = @(
             [pscustomobject]@{
                 SessionId='1'; Timestamp=[datetimeoffset]'2026-03-02'; TimestampText='2026-03-02 00:00'
@@ -32,6 +34,7 @@ Describe 'Get-CshFilteredDisplaySessions' {
 
 Describe 'Format-CshAsciiBanner' {
     It 'renders a compact three-line banner' {
+        $module = Import-Module $modulePath -Force -PassThru
         $bound = $module.NewBoundScriptBlock({ Format-CshAsciiBanner -Kind 'project' -Primary 'Desktop' -Secondary '10 sessions' })
         $banner = & $bound
         $lines = @($banner -split [Environment]::NewLine)

@@ -1,9 +1,10 @@
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 $projectRoot = Split-Path -Parent $here
-$module = Import-Module (Join-Path $projectRoot 'src/CodexSessionHub.psd1') -Force -PassThru
+$modulePath = Join-Path $projectRoot 'src/CodexSessionHub.psd1'
 
 Describe 'Display ordering' {
     It 'returns sessions in grouped display order' {
+        $module = Import-Module $modulePath -Force -PassThru
         $sessions = @(
             [pscustomobject]@{ SessionId='2'; Timestamp=[datetimeoffset]'2026-03-01'; TimestampText='2026-03-01 00:00'; LastUpdated=[datetimeoffset]'2026-03-01'; LastUpdatedText='2026-03-01 00:00'; LastUpdatedAge='1d ago'; ProjectKey='b'; ProjectName='B'; ProjectPath='B'; FilePath=''; ProjectExists=$true; Alias=''; Preview=''; DisplayTitle='B1' },
             [pscustomobject]@{ SessionId='1'; Timestamp=[datetimeoffset]'2026-03-02'; TimestampText='2026-03-02 00:00'; LastUpdated=[datetimeoffset]'2026-03-02'; LastUpdatedText='2026-03-02 00:00'; LastUpdatedAge='1h ago'; ProjectKey='a'; ProjectName='A'; ProjectPath='A'; FilePath=''; ProjectExists=$true; Alias=''; Preview=''; DisplayTitle='A1' }
@@ -21,6 +22,7 @@ Describe 'Display ordering' {
     }
 
     It 'encodes row identity keys for sessions and projects' {
+        $module = Import-Module $modulePath -Force -PassThru
         $session = [pscustomobject]@{
             SessionId='abc'; DisplayNumber=7; TimestampText='2026-03-02 00:00'; ProjectName='Desktop'; DisplayTitle='Title'; ProjectPath='C:\Users\twinr\Desktop'; Preview='Preview'
         }
@@ -36,6 +38,7 @@ Describe 'Display ordering' {
     }
 
     It 'builds an fzf query command with a quoted query placeholder' {
+        $module = Import-Module $modulePath -Force -PassThru
         $bound = $module.NewBoundScriptBlock({ Get-CshQueryCommand })
         $command = & $bound
 
@@ -47,6 +50,7 @@ Describe 'Display ordering' {
     }
 
     It 'builds an fzf preview command with session and project placeholders' {
+        $module = Import-Module $modulePath -Force -PassThru
         $bound = $module.NewBoundScriptBlock({ Get-CshPreviewCommand })
         $command = & $bound
 

@@ -1,9 +1,10 @@
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 $projectRoot = Split-Path -Parent $here
-$module = Import-Module (Join-Path $projectRoot 'src/CodexSessionHub.psd1') -Force -PassThru
+$modulePath = Join-Path $projectRoot 'src/CodexSessionHub.psd1'
 
 Describe 'Index metadata' {
     It 'stores aliases in memory' {
+        $module = Import-Module $modulePath -Force -PassThru
         $bound = $module.NewBoundScriptBlock({ New-CshIndex })
         $index = & $bound
         $bound = $module.NewBoundScriptBlock({
@@ -19,6 +20,7 @@ Describe 'Index metadata' {
     }
 
     It 'clears aliases when set to blank' {
+        $module = Import-Module $modulePath -Force -PassThru
         $bound = $module.NewBoundScriptBlock({ New-CshIndex })
         $index = & $bound
         $bound = $module.NewBoundScriptBlock({
@@ -36,6 +38,7 @@ Describe 'Index metadata' {
     }
 
     It 'removes alias entries when cleared' {
+        $module = Import-Module $modulePath -Force -PassThru
         $bound = $module.NewBoundScriptBlock({ New-CshIndex })
         $index = & $bound
         $bound = $module.NewBoundScriptBlock({

@@ -35,14 +35,41 @@ Before getting started, make sure you have:
 * **macOS:** `brew install fzf`
 * **Linux:** Install via `apt`, `dnf`, `pacman`, or `zypper` depending on your distro.
 
-### Setup
+### One-Line Install
 
-1. **Clone** the repository to your preferred location:
+This is the recommended install path for normal users once the repository is public:
+
+```powershell
+irm https://raw.githubusercontent.com/vinzify/Codex-Session-Hub/master/install.ps1 | iex
+```
+
+What it does:
+* Downloads the current project source from GitHub
+* Installs it into your user-local app directory
+* Wires `csx` into your PowerShell profile
+* Leaves your cloned repos untouched
+
+Default install locations:
+* **Windows:** `%LOCALAPPDATA%\CodexSessionHub`
+* **macOS / Linux:** `~/.local/share/codex-session-hub`
+
+After install:
+
+```powershell
+. $PROFILE
+csx doctor
+```
+
+### From Source
+
+Use this path if you want to contribute or run directly from a working tree.
+
+1. **Clone** the repository:
    ```powershell
    git clone https://github.com/vinzify/Codex-Session-Hub.git
    cd Codex-Session-Hub
    ```
-2. **Install** the CLI by running the install script:
+2. **Run** the install script:
    ```powershell
    pwsh -File .\install.ps1
    ```
@@ -50,9 +77,21 @@ Before getting started, make sure you have:
    ```powershell
    . $PROFILE
    ```
-4. You're ready to go! Run `csx` in your terminal.
+4. Run `csx`.
 
-*(To uninstall, simply run the `.\uninstall.ps1` script from the project folder).*
+### Uninstall
+
+If you used the one-line install:
+
+```powershell
+irm https://raw.githubusercontent.com/vinzify/Codex-Session-Hub/master/uninstall.ps1 | iex
+```
+
+If you installed from a local checkout:
+
+```powershell
+pwsh -File .\uninstall.ps1
+```
 
 ## 💻 Usage & Commands
 
@@ -114,7 +153,7 @@ Codex Session Hub supports customization through optional environment variables:
 Tests are written using [Pester](https://pester.dev/). To run the test suite:
 
 ```powershell
-# Run all tests
+Import-Module Pester -MinimumVersion 5.0 -Force
 Invoke-Pester -Path .\tests
 ```
 

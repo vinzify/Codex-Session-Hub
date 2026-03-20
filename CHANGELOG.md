@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Added a self-bootstrapping `install.ps1` for user-local installs
+- Added a self-contained `uninstall.ps1`
+- Documented one-line install and uninstall flows
+- Updated CI to `actions/checkout@v5`
+
 ## 0.1.0
 
 - Initial modular `fzf`-based release

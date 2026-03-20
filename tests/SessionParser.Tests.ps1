@@ -3,9 +3,18 @@ $projectRoot = Split-Path -Parent $here
 Import-Module (Join-Path $projectRoot 'src/CodexSessionHub.psd1') -Force
 $module = Get-Module CodexSessionHub
 
+function Invoke-CshInModule {
+    param(
+        [Parameter(Mandatory = $true)][scriptblock]$ScriptBlock,
+        [object[]]$ArgumentList
+    )
+
+    & $module.NewBoundScriptBlock($ScriptBlock) @ArgumentList
+}
+
 Describe 'Normalize-CshPath' {
     It 'removes the Windows long path prefix' {
-        (& $module { Normalize-CshPath '\\?\D:\code\example' }) | Should Be 'D:\code\example'
+        (Invoke-CshInModule -ScriptBlock { Normalize-CshPath '\\?\D:\code\example' }) | Should Be 'D:\code\example'
     }
 }
 
@@ -20,7 +29,10 @@ Describe 'Get-CshFilteredDisplaySessions' {
             }
         )
 
-        $filtered = @(& $module { param($inputSessions) Get-CshFilteredDisplaySessions -Sessions $inputSessions -Query '""""' } $sessions)
+        $filtered = @(Invoke-CshInModule -ScriptBlock {
+            param($inputSessions)
+            Get-CshFilteredDisplaySessions -Sessions $inputSessions -Query '""""'
+        } -ArgumentList (, $sessions))
         $filtered.Count | Should Be 1
         $filtered[0].SessionId | Should Be '1'
     }
@@ -28,7 +40,7 @@ Describe 'Get-CshFilteredDisplaySessions' {
 
 Describe 'Format-CshAsciiBanner' {
     It 'renders a compact three-line banner' {
-        $banner = & $module { Format-CshAsciiBanner -Kind 'project' -Primary 'Desktop' -Secondary '10 sessions' }
+        $banner = Invoke-CshInModule -ScriptBlock { Format-CshAsciiBanner -Kind 'project' -Primary 'Desktop' -Secondary '10 sessions' }
         $lines = @($banner -split [Environment]::NewLine)
 
         $lines.Count | Should Be 3

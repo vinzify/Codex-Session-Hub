@@ -3,6 +3,15 @@ $projectRoot = Split-Path -Parent $here
 Import-Module (Join-Path $projectRoot 'src/CodexSessionHub.psd1') -Force
 $module = Get-Module CodexSessionHub
 
+function Invoke-CshInModule {
+    param(
+        [Parameter(Mandatory = $true)][scriptblock]$ScriptBlock,
+        [object[]]$ArgumentList
+    )
+
+    & $module.NewBoundScriptBlock($ScriptBlock) @ArgumentList
+}
+
 Describe 'Display ordering' {
     It 'returns sessions in grouped display order' {
         $sessions = @(
@@ -10,7 +19,10 @@ Describe 'Display ordering' {
             [pscustomobject]@{ SessionId='1'; Timestamp=[datetimeoffset]'2026-03-02'; TimestampText='2026-03-02 00:00'; LastUpdated=[datetimeoffset]'2026-03-02'; LastUpdatedText='2026-03-02 00:00'; LastUpdatedAge='1h ago'; ProjectKey='a'; ProjectName='A'; ProjectPath='A'; FilePath=''; ProjectExists=$true; Alias=''; Preview=''; DisplayTitle='A1' }
         )
 
-        $ordered = @(& $module { param($inputSessions) Get-CshDisplaySessions -Sessions $inputSessions } $sessions)
+        $ordered = @(Invoke-CshInModule -ScriptBlock {
+            param($inputSessions)
+            Get-CshDisplaySessions -Sessions $inputSessions
+        } -ArgumentList (, $sessions))
         $ordered[0].SessionId | Should Be '1'
         $ordered[1].SessionId | Should Be '2'
         $ordered[0].DisplayNumber | Should Be 1
@@ -18,19 +30,20 @@ Describe 'Display ordering' {
     }
 
     It 'encodes row identity keys for sessions and projects' {
-        $sessionRow = & $module {
-            param($session)
-            ConvertTo-CshFzfRow -Session $session
-        } ([pscustomobject]@{
+        $session = [pscustomobject]@{
             SessionId='abc'; DisplayNumber=7; TimestampText='2026-03-02 00:00'; ProjectName='Desktop'; DisplayTitle='Title'; ProjectPath='C:\Users\twinr\Desktop'; Preview='Preview'
-        })
+        }
+        $sessionRow = Invoke-CshInModule -ScriptBlock {
+            param($boundSession)
+            ConvertTo-CshFzfRow -Session $boundSession
+        } -ArgumentList $session
 
         $sessionRow | Should Match '^S:abc\t'
-        (& $module { New-CshProjectRowKey -ProjectPath 'C:\Users\twinr\Desktop' }) | Should Match '^P:'
+        (Invoke-CshInModule -ScriptBlock { New-CshProjectRowKey -ProjectPath 'C:\Users\twinr\Desktop' }) | Should Match '^P:'
     }
 
     It 'builds an fzf query command with a quoted query placeholder' {
-        $command = & $module { Get-CshQueryCommand }
+        $command = Invoke-CshInModule -ScriptBlock { Get-CshQueryCommand }
 
         if ($IsWindows) {
             $command | Should Match 'csx-query\.cmd"$'
@@ -40,7 +53,7 @@ Describe 'Display ordering' {
     }
 
     It 'builds an fzf preview command with session and project placeholders' {
-        $command = & $module { Get-CshPreviewCommand }
+        $command = Invoke-CshInModule -ScriptBlock { Get-CshPreviewCommand }
 
         if ($IsWindows) {
             $command | Should Match 'csx-preview\.cmd" \{\}$'

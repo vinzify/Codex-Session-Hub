@@ -125,16 +125,16 @@ function Install-CshShellIntegration {
     $modulePath = (Join-Path $InstalledRoot 'src/CodexSessionHub.psd1').Replace("'", "''")
     $markerStart = '# >>> Codex Session Hub >>>'
     $markerEnd = '# <<< Codex Session Hub <<<'
-    $blockTemplate = @'
+$blockTemplate = @'
 # >>> Codex Session Hub >>>
 $cshFzfPath = Join-Path $env:LOCALAPPDATA 'Programs\fzf\bin'
-if ((Test-Path $cshFzfPath) -and (($env:Path -split ';') -notcontains $cshFzfPath)) {
+if ((Test-Path $cshFzfPath) -and (($env:Path -split ';') -notcontains $cshFzfPath)) {{
     $env:Path = "$cshFzfPath;$env:Path"
-}
-function csx {
+}}
+function csx {{
     Import-Module '{0}' -Force
     Invoke-CsxCli -Arguments $args -ShellMode
-}
+}}
 Set-Alias cxs csx
 # <<< Codex Session Hub <<<
 '@

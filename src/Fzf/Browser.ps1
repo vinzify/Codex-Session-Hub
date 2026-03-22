@@ -18,7 +18,7 @@ function ConvertTo-CshFzfRow {
         $rowKey
         $Session.DisplayNumber
         $Session.TimestampText
-        (Compress-CshText -Text $Session.ProjectName -MaxLength 14)
+        (Compress-CshText -Text $Session.WorkspaceLabel -MaxLength 28)
         (Compress-CshText -Text $Session.DisplayTitle -MaxLength 90)
         $Session.ProjectPath
         $Session.Preview
@@ -33,9 +33,19 @@ function ConvertFrom-CshFzfRow {
     param([Parameter(Mandatory = $true)][string]$Row)
 
     $parts = $Row -split "`t", 7
+    $workspaceKey = ''
+    if (($parts.Length -ge 1) -and ($parts[0] -match '^W:([A-Za-z0-9+/=]+)$')) {
+        try {
+            $workspaceKey = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($Matches[1]))
+        } catch {
+            $workspaceKey = ''
+        }
+    }
+
     return [pscustomobject]@{
         RowKey      = if ($parts.Length -ge 1) { $parts[0] } else { '' }
         SessionId   = if (($parts.Length -ge 1) -and ($parts[0] -match '^S:(.+)$')) { $Matches[1] } else { '' }
+        WorkspaceKey = $workspaceKey
         DisplayNumber = if ($parts.Length -ge 2) { $parts[1] } else { '' }
         Timestamp   = if ($parts.Length -ge 3) { $parts[2] } else { '' }
         ProjectName = if ($parts.Length -ge 4) { $parts[3] } else { '' }
@@ -45,11 +55,11 @@ function ConvertFrom-CshFzfRow {
     }
 }
 
-function New-CshProjectRowKey {
-    param([Parameter(Mandatory = $true)][string]$ProjectPath)
+function New-CshWorkspaceRowKey {
+    param([Parameter(Mandatory = $true)][string]$WorkspaceKey)
 
-    $bytes = [System.Text.Encoding]::UTF8.GetBytes($ProjectPath)
-    return 'P:{0}' -f [Convert]::ToBase64String($bytes)
+    $bytes = [System.Text.Encoding]::UTF8.GetBytes($WorkspaceKey)
+    return 'W:{0}' -f [Convert]::ToBase64String($bytes)
 }
 
 function Get-CshPreviewCommand {
@@ -72,6 +82,13 @@ function Get-CshQueryCommand {
     return ('pwsh -NoProfile -File "{0}" __query' -f $shimPath)
 }
 
+function Get-CshBrowserHeader {
+    return @(
+        'Find: text folder/repo | # number | title:term | repo:term | branch:term'
+        'Keys: Enter open | Tab mark | Ctrl-E rename | Ctrl-R reset | Ctrl-D delete'
+    ) -join "`n"
+}
+
 function ConvertTo-CshFzfRows {
     param([object[]]$Sessions)
 
@@ -81,23 +98,24 @@ function ConvertTo-CshFzfRows {
     }
 
     $rows = New-Object 'System.Collections.Generic.List[string]'
-    $groups = $Sessions | Group-Object ProjectKey
+    $groups = $Sessions | Group-Object GroupKey
     $orderedProjects = foreach ($group in $groups) {
         $items = @($group.Group | Sort-Object @{ Expression = 'DisplayNumber'; Descending = $false })
         [pscustomobject]@{
-            ProjectName = $items[0].ProjectName
-            ProjectPath = $items[0].ProjectPath
-            Items       = $items
+            GroupKey       = if (-not [string]::IsNullOrWhiteSpace([string]$items[0].GroupKey)) { $items[0].GroupKey } else { $items[0].ProjectKey }
+            WorkspaceLabel = if (-not [string]::IsNullOrWhiteSpace([string]$items[0].WorkspaceLabel)) { $items[0].WorkspaceLabel } else { $items[0].ProjectName }
+            ProjectPath    = $items[0].ProjectPath
+            Items          = $items
         }
     }
 
     foreach ($project in $orderedProjects) {
-        $headerKey = New-CshProjectRowKey -ProjectPath $project.ProjectPath
+        $headerKey = New-CshWorkspaceRowKey -WorkspaceKey $project.GroupKey
         $headerFields = @(
             $headerKey
             ''
             ''
-            ('[{0}] {1}' -f $project.Items.Count, $project.ProjectName)
+            ('[{0}] {1}' -f $project.Items.Count, $project.WorkspaceLabel)
             (Compress-CshText -Text $project.ProjectPath -MaxLength 100)
             $project.ProjectPath
             ''
@@ -152,7 +170,7 @@ function Invoke-CshFzfBrowser {
         '--bind'
         "start:reload-sync($queryCommand),change:reload-sync($queryCommand {q})+first,enter:print(enter)+accept,ctrl-d:print(ctrl-d)+accept,ctrl-e:print(ctrl-e)+accept,ctrl-r:print(ctrl-r)+accept"
         '--header'
-        'Text=folder | Number=# | title:term | Enter resume | Tab select | Ctrl-E rename | Ctrl-R reset | Ctrl-D delete'
+        (Get-CshBrowserHeader)
     )
 
     if ($InitialQuery) {
@@ -198,13 +216,26 @@ function Get-CshProjectPreviewLines {
     $latest = $ProjectSessions[0]
     $sessionNumbers = @($ProjectSessions | Select-Object -ExpandProperty DisplayNumber)
     $rangeText = if ($sessionNumbers.Count -gt 0) { ('#{0} -> #{1}' -f ($sessionNumbers | Measure-Object -Minimum).Minimum, ($sessionNumbers | Measure-Object -Maximum).Maximum) } else { '-' }
+    $branchNames = @($ProjectSessions | ForEach-Object { [string]$_.BranchDisplay } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Sort-Object -Unique)
+    $branchSummary = ''
+    if ($branchNames.Count -eq 1) {
+        $branchSummary = $branchNames[0]
+    } elseif ($branchNames.Count -gt 1) {
+        $visibleBranches = @($branchNames | Select-Object -First 3)
+        $branchSummary = $visibleBranches -join ', '
+        if ($branchNames.Count -gt $visibleBranches.Count) {
+            $branchSummary = '{0} +{1} more' -f $branchSummary, ($branchNames.Count - $visibleBranches.Count)
+        }
+    }
     $recentLines = @($ProjectSessions | Select-Object -First 3 | ForEach-Object {
         '  {0}  {1}' -f $_.LastUpdatedAge.PadRight(7), (Compress-CshText -Text $_.DisplayTitle -MaxLength 52)
     })
 
     return @(
-        (Format-CshAsciiBanner -Kind 'project' -Primary $latest.ProjectName -Secondary ('{0} sessions' -f $ProjectSessions.Count))
+        (Format-CshAsciiBanner -Kind 'workspace' -Primary $latest.WorkspaceLabel -Secondary ('{0} sessions' -f $ProjectSessions.Count))
         ('Path:    {0}' -f $latest.ProjectPath)
+        $(if (-not [string]::IsNullOrWhiteSpace([string]$latest.RepoRoot)) { 'Repo:    {0}' -f $latest.RepoRoot })
+        $(if ($branchSummary) { 'Branch:  {0}' -f $branchSummary })
         ('Exists:  {0}' -f $latest.ProjectExists)
         ('Latest:  {0} ({1})' -f $latest.LastUpdatedAge, $latest.LastUpdatedText)
         ('Started: {0}' -f $latest.TimestampText)
@@ -224,9 +255,11 @@ function Get-CshSessionPreviewLines {
     $projectCountText = if ($ProjectSessionCount -gt 0) { '{0} sessions' -f $ProjectSessionCount } else { '' }
 
     return @(
-        (Format-CshAsciiBanner -Kind 'session' -Primary ('#{0} {1}' -f $Session.DisplayNumber, $Session.ProjectName) -Secondary $Session.LastUpdatedAge)
+        (Format-CshAsciiBanner -Kind 'session' -Primary ('#{0} {1}' -f $Session.DisplayNumber, $Session.WorkspaceLabel) -Secondary $Session.LastUpdatedAge)
         ('Title:   {0}' -f $Session.DisplayTitle)
         ('Project: {0}' -f $Session.ProjectPath)
+        $(if (-not [string]::IsNullOrWhiteSpace([string]$Session.RepoRoot)) { 'Repo:    {0}' -f $Session.RepoRoot })
+        $(if (-not [string]::IsNullOrWhiteSpace([string]$Session.BranchDisplay)) { 'Branch:  {0}' -f $Session.BranchDisplay })
         ('Exists:  {0}' -f $Session.ProjectExists)
         $(if ($projectCountText) { 'Group:   {0}' -f $projectCountText })
         ('Started: {0}' -f $Session.TimestampText)
@@ -242,6 +275,7 @@ function Get-CshSessionPreviewLines {
 function Write-CshPreview {
     param(
         [AllowEmptyString()][string]$SessionId,
+        [AllowEmptyString()][string]$WorkspaceKey,
         [AllowEmptyString()][string]$ProjectPath
     )
 
@@ -250,7 +284,9 @@ function Write-CshPreview {
     $displaySessions = @(Get-CshDisplaySessions -Sessions $sessions)
     $projectSessions = @()
 
-    if (-not [string]::IsNullOrWhiteSpace($ProjectPath)) {
+    if (-not [string]::IsNullOrWhiteSpace($WorkspaceKey)) {
+        $projectSessions = @($displaySessions | Where-Object { $_.GroupKey -eq $WorkspaceKey } | Sort-Object @{ Expression = 'Timestamp'; Descending = $true })
+    } elseif (-not [string]::IsNullOrWhiteSpace($ProjectPath)) {
         $projectSessions = @($displaySessions | Where-Object { $_.ProjectPath -eq $ProjectPath } | Sort-Object @{ Expression = 'Timestamp'; Descending = $true })
     }
 
@@ -258,7 +294,7 @@ function Write-CshPreview {
         $session = Find-CshSession -Sessions $displaySessions -SessionId $SessionId
         if ($session) {
             if ($projectSessions.Count -eq 0) {
-                $projectSessions = @($displaySessions | Where-Object { $_.ProjectPath -eq $session.ProjectPath } | Sort-Object @{ Expression = 'Timestamp'; Descending = $true })
+                $projectSessions = @($displaySessions | Where-Object { $_.GroupKey -eq $session.GroupKey } | Sort-Object @{ Expression = 'Timestamp'; Descending = $true })
             }
 
             $lines = @(Get-CshSessionPreviewLines -Session $session -ProjectSessionCount $projectSessions.Count)
@@ -267,7 +303,7 @@ function Write-CshPreview {
         }
     }
 
-    if ([string]::IsNullOrWhiteSpace($ProjectPath)) {
+    if ([string]::IsNullOrWhiteSpace($WorkspaceKey) -and [string]::IsNullOrWhiteSpace($ProjectPath)) {
         Write-Output ''
         return
     }

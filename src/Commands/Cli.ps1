@@ -7,7 +7,7 @@ function Resolve-CshSelectedSessions {
     $resolved = foreach ($sessionId in $SessionIds) {
         if ($sessionId -match '^S:(.+)$') {
             $sessionId = $Matches[1]
-        } elseif ($sessionId -match '^P:') {
+        } elseif ($sessionId -match '^[PW]:') {
             continue
         }
 
@@ -161,21 +161,23 @@ function Invoke-CsxCli {
     switch ($command) {
         '__preview' {
             $sessionId = ''
+            $workspaceKey = ''
             $projectPath = ''
 
             if ($rest.Count -ge 1) {
                 $rawValue = [string]$rest[0]
                 if ($rawValue -match '^S:([^\s]+)') {
                     $sessionId = $Matches[1]
-                } elseif ($rawValue -match '^P:([A-Za-z0-9+/=]+)') {
+                } elseif ($rawValue -match '^W:([A-Za-z0-9+/=]+)') {
                     try {
-                        $projectPath = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($Matches[1]))
+                        $workspaceKey = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($Matches[1]))
                     } catch {
-                        $projectPath = ''
+                        $workspaceKey = ''
                     }
                 } elseif ($rawValue.Contains("`t")) {
                     $row = ConvertFrom-CshFzfRow -Row $rawValue
                     $sessionId = $row.SessionId
+                    $workspaceKey = $row.WorkspaceKey
                     $projectPath = $row.ProjectPath
                 } else {
                     $sessionId = $rawValue
@@ -190,7 +192,7 @@ function Invoke-CsxCli {
                 }
             }
 
-            Write-CshPreview -SessionId $sessionId -ProjectPath $projectPath
+            Write-CshPreview -SessionId $sessionId -WorkspaceKey $workspaceKey -ProjectPath $projectPath
         }
         '__query' {
             $query = if ($rest.Count -gt 0) { $rest -join ' ' } elseif ($env:FZF_QUERY) { $env:FZF_QUERY } else { '' }

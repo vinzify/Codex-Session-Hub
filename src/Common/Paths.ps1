@@ -102,7 +102,7 @@ function Normalize-CshPath {
 
     # Keep Windows drive-style paths stable even when parsed on Unix runners.
     if ($trimmed -match '^[A-Za-z]:[\\/]') {
-        return $trimmed.TrimEnd('\', '/')
+        return ($trimmed -replace '/', '\').TrimEnd('\', '/')
     }
 
     try {

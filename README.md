@@ -16,6 +16,7 @@ Codex Session Hub gives Codex CLI a global session browser. Instead of opening a
 
 - Browse Codex sessions across all projects from one command
 - Resume directly into the correct project directory
+- Distinguish worktrees and feature branches inside the same repo
 - Rename sessions with persistent aliases
 - Multi-select and delete sessions in bulk
 - Preview project and session context before resuming
@@ -172,10 +173,17 @@ Browser controls:
 | `Ctrl-R` | Reset the focused session's title |
 | `Esc` / `Ctrl-C` | Exit the browser |
 
+Browser behavior:
+- Sessions are grouped by workspace context, not only by raw folder path.
+- Git-backed workspaces show repo and branch context in both the list and preview.
+- Different worktrees in the same repo are separated using repo + branch + working directory identity behind the scenes.
+
 Search filters:
-- Text query: folder or project name
+- Text query: folder or repo name
 - Number query: session number prefix
 - `title:<term>` or `t:<term>`: session title or alias
+- `repo:<term>` or `r:<term>`: git repo name
+- `branch:<term>` or `b:<term>`: git branch name
 
 ## Configuration
 

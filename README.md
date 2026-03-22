@@ -97,15 +97,23 @@ clx
 
 ## Requirements
 
-Before installing, make sure you have:
+Core runtime:
 - [PowerShell 7+](https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell) available as `pwsh`
-- Codex CLI in `PATH` if you want to use `csx`
-- Claude Code in `PATH` if you want to use `clx`
 - [`fzf`](https://github.com/junegunn/fzf) in `PATH`
 
+Agent CLI:
+- At least one supported CLI installed:
+  - `codex` for `csx`
+  - `claude` for `clx`
+
+Supported shells:
+- PowerShell
+- zsh
+- bash
+
 Notes:
-- PowerShell 7+ is the runtime requirement.
-- Your interactive shell can still be PowerShell, zsh, or bash.
+- PowerShell 7+ is the runtime requirement on Windows, macOS, and Linux.
+- Your interactive shell can be PowerShell, zsh, or bash.
 - On macOS and Linux, the shell launchers call `pwsh` under the hood.
 
 Install `fzf`:

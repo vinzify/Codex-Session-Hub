@@ -42,8 +42,9 @@ If you use bash, reload `~/.bash_profile` or `~/.profile` instead.
 
 1. Install PowerShell 7 as `pwsh`.
 2. Install `fzf`.
-3. Make sure `codex` is available in `PATH` if you want `csx`.
-4. Make sure `claude` is available in `PATH` if you want `clx`.
+3. Install at least one supported agent CLI.
+4. Use `codex` if you want `csx`.
+5. Use `claude` if you want `clx`.
 
 ## From Source
 

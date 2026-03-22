@@ -22,6 +22,16 @@ Codex Session Hub gives Codex CLI a global session browser. Instead of opening a
 - Preview project and session context before resuming
 - Works on Windows, macOS, and Linux with PowerShell 7
 
+## Features
+
+- Global browser for Codex sessions across all repos on your machine
+- Workspace-aware grouping using repo + branch + working directory identity
+- Visible repo and branch context in the list and preview for git-backed sessions
+- Plain-text search by folder or repo name, plus `title:`, `repo:`, and `branch:` filters
+- Safe bulk delete from the browser, including whole-workspace delete with confirmation
+- Persistent aliases for sessions so important threads are easy to find later
+- Shell integration for PowerShell, zsh, and bash
+
 ## Quick Start
 
 Windows PowerShell 7+:
@@ -162,6 +172,17 @@ csx delete <session-id>
 csx doctor
 ```
 
+Quick examples:
+
+```powershell
+csx
+csx browse repo:Codex-Session-Hub
+csx browse branch:feature/session-hub
+csx browse title:installer
+csx rename 019d12c0 --name "Release prep"
+csx delete 019d12c0
+```
+
 Browser controls:
 
 | Key Binding | Action |
@@ -178,6 +199,8 @@ Browser behavior:
 - Git-backed workspaces show repo and branch context in both the list and preview.
 - Different worktrees in the same repo are separated using repo + branch + working directory identity behind the scenes.
 - Selecting a workspace header and pressing `Ctrl-D` deletes every session in that workspace after confirmation.
+- Delete confirmation shows the workspace label, total session count, and a preview of the first session titles before anything is removed.
+- The browser header is intentionally compact and split across two lines so search syntax and key bindings stay readable.
 
 Search filters:
 - Text query: folder or repo name
@@ -185,6 +208,10 @@ Search filters:
 - `title:<term>` or `t:<term>`: session title or alias
 - `repo:<term>` or `r:<term>`: git repo name
 - `branch:<term>` or `b:<term>`: git branch name
+
+Preview details:
+- Session preview shows the title, working directory, repo root, branch, timestamps, and a short prompt excerpt.
+- Workspace preview shows the workspace label, path, repo context, branch summary, and recent sessions in that group.
 
 ## Configuration
 

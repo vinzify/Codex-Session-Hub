@@ -12,6 +12,19 @@ pub struct BrowserResult {
     pub session_ids: Vec<String>,
 }
 
+fn normalize_selected_value(value: &str) -> String {
+    let trimmed = value.trim();
+    if trimmed.is_empty() {
+        return String::new();
+    }
+
+    if let Some((first, _)) = trimmed.split_once('\t') {
+        return first.trim().to_string();
+    }
+
+    trimmed.to_string()
+}
+
 fn row_key(provider: ProviderKind, session_id: &str) -> String {
     format!("S:{}:{session_id}", provider.name())
 }
@@ -103,8 +116,6 @@ pub fn run_fzf(
         "--border".to_string(),
         "--delimiter".to_string(),
         "\t".to_string(),
-        "--accept-nth".to_string(),
-        "1".to_string(),
         "--with-nth".to_string(),
         "2,3,4,5".to_string(),
         "--nth".to_string(),
@@ -113,20 +124,18 @@ pub fn run_fzf(
         format!("'{}' __preview {{}}", exe.display()),
         "--preview-window".to_string(),
         "right:40%:wrap".to_string(),
-        "--bind".to_string(),
+        "--expect".to_string(),
         if provider.supports_delete() {
-            format!(
-                "start:reload-sync('{}' __query),change:reload-sync('{}' __query {{q}})+first,enter:print(enter)+accept,ctrl-e:print(ctrl-e)+accept,ctrl-r:print(ctrl-r)+accept,ctrl-d:print(ctrl-d)+accept",
-                exe.display(),
-                exe.display()
-            )
+            "enter,ctrl-e,ctrl-r,ctrl-d".to_string()
         } else {
-            format!(
-                "start:reload-sync('{}' __query),change:reload-sync('{}' __query {{q}})+first,enter:print(enter)+accept,ctrl-e:print(ctrl-e)+accept,ctrl-r:print(ctrl-r)+accept",
-                exe.display(),
-                exe.display()
-            )
+            "enter,ctrl-e,ctrl-r".to_string()
         },
+        "--bind".to_string(),
+        format!(
+            "start:reload-sync('{}' __query),change:reload-sync('{}' __query {{q}})+first",
+            exe.display(),
+            exe.display()
+        ),
         "--header".to_string(),
         browser_header(provider),
     ];
@@ -177,7 +186,7 @@ pub fn run_fzf(
         action,
         session_ids: selected_rows
             .into_iter()
-            .map(|value| value.trim().to_string())
+            .map(|value| normalize_selected_value(&value))
             .filter(|value| !value.is_empty())
             .collect(),
     }))
@@ -479,4 +488,25 @@ pub fn ensure_fzf() -> Result<()> {
     which::which("fzf").map(|_| ()).map_err(|_| {
         anyhow!("fzf is required but was not found in PATH. Run doctor for install help.")
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::normalize_selected_value;
+
+    #[test]
+    fn strips_full_fzf_rows_to_first_column() {
+        assert_eq!(
+            normalize_selected_value("S:codex:abc123\t1\t2026-03-27 10:00\trepo\tTitle"),
+            "S:codex:abc123"
+        );
+        assert_eq!(
+            normalize_selected_value("W:codex:repo|main\t\t\t[2] repo"),
+            "W:codex:repo|main"
+        );
+        assert_eq!(
+            normalize_selected_value("S:claude:def456"),
+            "S:claude:def456"
+        );
+    }
 }

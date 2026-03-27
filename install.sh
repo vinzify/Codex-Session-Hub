@@ -15,6 +15,17 @@ has_local_source() {
   [ -f "$1/Cargo.toml" ] && [ -f "$1/src/main.rs" ]
 }
 
+is_file_backed_local_source() {
+  script_path="$1"
+  case "$(basename -- "$script_path")" in
+    install.sh) ;;
+    *) return 1 ;;
+  esac
+  [ -f "$script_path" ] || return 1
+  script_root="$(script_dir "$script_path")" || return 1
+  has_local_source "$script_root"
+}
+
 require_cmd() {
   if ! command -v "$1" >/dev/null 2>&1; then
     echo "Missing required command: $1" >&2
@@ -92,7 +103,7 @@ run_shell_install() {
 }
 
 main() {
-  script_root="$(script_dir "$0")"
+  script_root=""
   tmp_dir=""
   cleanup() {
     if [ -n "$tmp_dir" ] && [ -d "$tmp_dir" ]; then
@@ -101,7 +112,8 @@ main() {
   }
   trap cleanup EXIT INT TERM
 
-  if has_local_source "$script_root"; then
+  if is_file_backed_local_source "$0"; then
+    script_root="$(script_dir "$0")"
     binary_path="$(build_local_binary "$script_root")"
   else
     tmp_dir="$(mktemp -d 2>/dev/null || mktemp -d -t agent-session-hub-install)"

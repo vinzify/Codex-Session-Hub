@@ -43,6 +43,18 @@ function Get-AshScriptRoot {
     return (Get-Location).Path
 }
 
+function Test-AshHasFileBackedInvocation {
+    if ($PSCommandPath) {
+        return $true
+    }
+
+    if ($MyInvocation.MyCommand.Path) {
+        return $true
+    }
+
+    return $false
+}
+
 function Get-AshWindowsTarget {
     switch ([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture) {
         'X64' { return 'x86_64-pc-windows-msvc' }
@@ -144,7 +156,7 @@ $resolvedBinRoot = Get-AshBinRoot
 $download = $null
 
 try {
-    $binaryPath = if (Test-AshLocalSource -Path $scriptRoot) {
+    $binaryPath = if ((Test-AshHasFileBackedInvocation) -and (Test-AshLocalSource -Path $scriptRoot)) {
         Get-AshBuiltBinary -SourceRoot $scriptRoot
     } else {
         $download = Get-AshDownloadedBinary -Repository $Repository -Version $Version

@@ -376,31 +376,33 @@ pub fn write_preview(
 }
 
 pub fn parse_row_target(raw: &str) -> (String, String, String) {
-    if let Some(rest) = raw.strip_prefix("S:") {
+    let first_column = raw.split('\t').next().unwrap_or(raw).trim();
+
+    if let Some(rest) = first_column.strip_prefix("S:") {
         let parts = rest.splitn(2, ':').collect::<Vec<_>>();
         if parts.len() == 2 {
-            return (parts[1].to_string(), String::new(), String::new());
+            return (parts[1].trim().to_string(), String::new(), String::new());
         }
-        return (rest.to_string(), String::new(), String::new());
+        return (rest.trim().to_string(), String::new(), String::new());
     }
-    if let Some(rest) = raw.strip_prefix("W:") {
+    if let Some(rest) = first_column.strip_prefix("W:") {
         let parts = rest.splitn(2, ':').collect::<Vec<_>>();
         if parts.len() == 2 {
-            return (String::new(), parts[1].to_string(), String::new());
+            return (String::new(), parts[1].trim().to_string(), String::new());
         }
-        return (String::new(), rest.to_string(), String::new());
+        return (String::new(), rest.trim().to_string(), String::new());
     }
     if raw.contains('\t') {
         let columns = raw.split('\t').collect::<Vec<_>>();
         let session_id = columns.first().copied().unwrap_or_default();
         let project_path = columns.get(5).copied().unwrap_or_default();
         return (
-            session_id.to_string(),
+            session_id.trim().to_string(),
             String::new(),
-            project_path.to_string(),
+            project_path.trim().to_string(),
         );
     }
-    (raw.to_string(), String::new(), String::new())
+    (raw.trim().to_string(), String::new(), String::new())
 }
 
 pub fn confirm_delete(sessions: &[SessionRecord]) -> Result<bool> {
@@ -497,7 +499,7 @@ pub fn ensure_fzf() -> Result<()> {
 
 #[cfg(test)]
 mod tests {
-    use super::{normalize_selected_value, parse_fzf_output};
+    use super::{normalize_selected_value, parse_fzf_output, parse_row_target};
 
     #[test]
     fn strips_full_fzf_rows_to_first_column() {
@@ -525,5 +527,17 @@ S:codex:abc123
         .expect("parsed output");
         assert_eq!(result.action, "ctrl-r");
         assert_eq!(result.session_ids, vec!["S:codex:abc123"]);
+    }
+
+    #[test]
+    fn parses_prefixed_rows_with_extra_columns() {
+        assert_eq!(
+            parse_row_target("S:codex:abc123	1	2026-03-28 12:00	repo	Title"),
+            ("abc123".to_string(), String::new(), String::new())
+        );
+        assert_eq!(
+            parse_row_target("W:codex:repo|main			[2] repo"),
+            (String::new(), "repo|main".to_string(), String::new())
+        );
     }
 }

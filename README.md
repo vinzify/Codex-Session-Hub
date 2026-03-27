@@ -39,6 +39,8 @@ Windows PowerShell:
 irm https://raw.githubusercontent.com/vinzify/Agent-Session-Hub/master/install.ps1 | iex
 ```
 
+Those install scripts download the latest GitHub Release archive for your platform. Local checkouts still build from source.
+
 From a local checkout:
 
 ```sh

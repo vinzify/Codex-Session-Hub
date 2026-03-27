@@ -25,3 +25,17 @@ Or on Windows:
 - The legacy alias `cxs` still maps to `csx`
 - The Rust runtime lives under `src/*.rs`
 - `cargo test` is the test entrypoint
+
+## Releases
+
+Public one-line installs pull from GitHub Releases.
+
+To publish a release:
+
+1. Create and push a semver tag like `v0.1.0`
+2. Let `.github/workflows/release.yml` build and upload the release archives
+3. Verify the release contains:
+   - `agent-session-hub-x86_64-unknown-linux-gnu.tar.gz`
+   - `agent-session-hub-x86_64-apple-darwin.tar.gz`
+   - `agent-session-hub-aarch64-apple-darwin.tar.gz`
+   - `agent-session-hub-x86_64-pc-windows-msvc.zip`

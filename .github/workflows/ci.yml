@@ -2,20 +2,36 @@ name: CI
 
 on:
   push:
+    branches:
+      - master
   pull_request:
 
 jobs:
+  fmt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - name: Check formatting
+        run: cargo fmt --check
+      - name: Check install script syntax
+        run: |
+          sh -n install.sh
+          sh -n uninstall.sh
+
   test:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, ubuntu-latest, macos-latest]
+        os:
+          - ubuntu-latest
+          - macos-13
+          - windows-latest
     steps:
       - uses: actions/checkout@v5
-      - name: Install Pester
-        shell: pwsh
-        run: Install-Module Pester -Force -SkipPublisherCheck -Scope CurrentUser
+      - uses: dtolnay/rust-toolchain@stable
       - name: Run tests
-        shell: pwsh
-        run: Invoke-Pester -Path ./tests -Output Detailed
+        run: cargo test --locked

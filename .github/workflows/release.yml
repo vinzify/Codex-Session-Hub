@@ -1,0 +1,99 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to publish, for example v0.1.0"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            archive_name: agent-session-hub-x86_64-unknown-linux-gnu.tar.gz
+            binary_name: agent-session-hub
+            archive_kind: tar.gz
+          - os: macos-13
+            target: x86_64-apple-darwin
+            archive_name: agent-session-hub-x86_64-apple-darwin.tar.gz
+            binary_name: agent-session-hub
+            archive_kind: tar.gz
+          - os: macos-14
+            target: aarch64-apple-darwin
+            archive_name: agent-session-hub-aarch64-apple-darwin.tar.gz
+            binary_name: agent-session-hub
+            archive_kind: tar.gz
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            archive_name: agent-session-hub-x86_64-pc-windows-msvc.zip
+            binary_name: agent-session-hub.exe
+            archive_kind: zip
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Build release binary
+        run: cargo build --release --locked
+
+      - name: Package archive (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          mkdir -p dist
+          cp "target/release/${{ matrix.binary_name }}" dist/
+          cp README.md LICENSE dist/
+          tar -czf "${{ matrix.archive_name }}" -C dist .
+
+      - name: Package archive (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          Copy-Item "target/release/${{ matrix.binary_name }}" "dist/${{ matrix.binary_name }}"
+          Copy-Item README.md dist/README.md
+          Copy-Item LICENSE dist/LICENSE
+          Compress-Archive -Path dist/* -DestinationPath "${{ matrix.archive_name }}" -Force
+
+      - name: Upload packaged asset
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.archive_name }}
+          path: ${{ matrix.archive_name }}
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download release assets
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+
+      - name: Flatten artifact layout
+        run: |
+          mkdir -p final-assets
+          find release-assets -type f -maxdepth 2 -exec cp {} final-assets/ \;
+          ls -l final-assets
+
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+          draft: false
+          prerelease: false
+          files: final-assets/*

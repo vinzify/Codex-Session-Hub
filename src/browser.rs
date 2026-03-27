@@ -92,6 +92,37 @@ pub fn fzf_rows(entries: &[DisplaySession]) -> Vec<String> {
     rows
 }
 
+fn parse_fzf_output(stdout: &str) -> Option<BrowserResult> {
+    if stdout.trim().is_empty() {
+        return None;
+    }
+    let mut lines = stdout.lines().map(ToOwned::to_owned).collect::<Vec<_>>();
+    let mut action = lines
+        .first()
+        .cloned()
+        .unwrap_or_else(|| "enter".to_string());
+    if action.trim().is_empty() {
+        action = "enter".to_string();
+    }
+    let mut selected_rows = lines.split_off(1);
+    if selected_rows.is_empty()
+        && lines.len() == 1
+        && !matches!(action.as_str(), "enter" | "ctrl-d" | "ctrl-e" | "ctrl-r")
+    {
+        action = "enter".to_string();
+        selected_rows = lines;
+    }
+
+    Some(BrowserResult {
+        action,
+        session_ids: selected_rows
+            .into_iter()
+            .map(|value| normalize_selected_value(&value))
+            .filter(|value| !value.is_empty())
+            .collect(),
+    })
+}
+
 pub fn browser_header(provider: ProviderKind) -> String {
     let keys_line = if provider.supports_delete() {
         "Keys: Enter open | Tab mark | Ctrl-E rename | Ctrl-R reset | Ctrl-D delete(confirm)"
@@ -163,33 +194,7 @@ pub fn run_fzf(
         return Ok(None);
     }
     let stdout = String::from_utf8_lossy(&output.stdout);
-    if stdout.trim().is_empty() {
-        return Ok(None);
-    }
-    let mut lines = stdout.lines().map(ToOwned::to_owned).collect::<Vec<_>>();
-    let mut action = lines
-        .first()
-        .cloned()
-        .unwrap_or_else(|| "enter".to_string());
-    if action.trim().is_empty() {
-        action = "enter".to_string();
-    }
-    let mut selected_rows = lines.split_off(1);
-    if selected_rows.is_empty()
-        && lines.len() == 1
-        && !matches!(action.as_str(), "enter" | "ctrl-d" | "ctrl-e" | "ctrl-r")
-    {
-        action = "enter".to_string();
-        selected_rows = lines;
-    }
-    Ok(Some(BrowserResult {
-        action,
-        session_ids: selected_rows
-            .into_iter()
-            .map(|value| normalize_selected_value(&value))
-            .filter(|value| !value.is_empty())
-            .collect(),
-    }))
+    Ok(parse_fzf_output(&stdout))
 }
 
 pub fn session_preview(session: &DisplaySession, project_session_count: usize) -> String {
@@ -492,21 +497,33 @@ pub fn ensure_fzf() -> Result<()> {
 
 #[cfg(test)]
 mod tests {
-    use super::normalize_selected_value;
+    use super::{normalize_selected_value, parse_fzf_output};
 
     #[test]
     fn strips_full_fzf_rows_to_first_column() {
         assert_eq!(
-            normalize_selected_value("S:codex:abc123\t1\t2026-03-27 10:00\trepo\tTitle"),
+            normalize_selected_value("S:codex:abc123	1	2026-03-27 10:00	repo	Title"),
             "S:codex:abc123"
         );
         assert_eq!(
-            normalize_selected_value("W:codex:repo|main\t\t\t[2] repo"),
+            normalize_selected_value("W:codex:repo|main			[2] repo"),
             "W:codex:repo|main"
         );
         assert_eq!(
             normalize_selected_value("S:claude:def456"),
             "S:claude:def456"
         );
+    }
+
+    #[test]
+    fn preserves_expected_shortcut_actions() {
+        let result = parse_fzf_output(
+            "ctrl-r
+S:codex:abc123
+",
+        )
+        .expect("parsed output");
+        assert_eq!(result.action, "ctrl-r");
+        assert_eq!(result.session_ids, vec!["S:codex:abc123"]);
     }
 }

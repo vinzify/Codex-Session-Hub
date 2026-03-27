@@ -272,16 +272,69 @@ fn hidden_select(provider: ProviderKind, args: &[String]) -> Result<()> {
     if selected.is_empty() {
         return Ok(());
     }
-    if selected.len() > 1 {
-        return Err(anyhow!(
-            "Resume only supports one session at a time. Clear multi-select or choose a single row."
-        ));
+
+    match result.action.as_str() {
+        "enter" => {
+            if selected.len() > 1 {
+                return Err(anyhow!(
+                    "Resume only supports one session at a time. Clear multi-select or choose a single row."
+                ));
+            }
+            println!(
+                "{}	{}",
+                selected[0].session.project_path, selected[0].session.session_id
+            );
+            Ok(())
+        }
+        "ctrl-d" => {
+            if !provider.supports_delete() {
+                return Err(anyhow!(
+                    "{} session delete is not supported.",
+                    provider.display_name()
+                ));
+            }
+            let mut index = AliasIndex::load(provider)?;
+            let targets = selected
+                .into_iter()
+                .map(|entry| entry.session.clone())
+                .collect::<Vec<_>>();
+            if !confirm_delete(&targets)? {
+                return Ok(());
+            }
+            for session in targets {
+                match fs::remove_file(&session.file_path) {
+                    Ok(_) => {
+                        index.remove_alias(provider, &session.session_id);
+                        println!("[deleted] {} Deleted", session.session_id);
+                    }
+                    Err(err) => {
+                        println!("[failed] {} {}", session.session_id, err);
+                    }
+                }
+            }
+            index.save(provider)
+        }
+        "ctrl-e" => {
+            let target = &selected[0].session;
+            print!(
+                "Rename title for #{} in {} (blank resets): ",
+                selected[0].display_number, target.project_name
+            );
+            io::stdout().flush()?;
+            let mut alias = String::new();
+            io::stdin().read_line(&mut alias)?;
+            let mut index = AliasIndex::load(provider)?;
+            index.set_alias(provider, &target.session_id, alias.trim());
+            index.save(provider)
+        }
+        "ctrl-r" => {
+            let target = &selected[0].session;
+            let mut index = AliasIndex::load(provider)?;
+            index.remove_alias(provider, &target.session_id);
+            index.save(provider)
+        }
+        _ => Err(anyhow!("Unsupported browser action: {}", result.action)),
     }
-    println!(
-        "{}\t{}",
-        selected[0].session.project_path, selected[0].session.session_id
-    );
-    Ok(())
 }
 
 fn resume_session(session: &crate::session::SessionRecord) -> Result<()> {

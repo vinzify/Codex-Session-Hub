@@ -210,6 +210,10 @@ pub fn install_cmd_launchers(exe_path: &Path) -> Result<PathBuf> {
         ("csx.cmd", cmd_launcher_content(exe_name, "codex")),
         ("clx.cmd", cmd_launcher_content(exe_name, "claude")),
         ("opx.cmd", cmd_launcher_content(exe_name, "opencode")),
+        (
+            "sessionhub.cmd",
+            "@echo off\r\n\"%~dp0agent-session-hub.exe\" %*\r\n".to_string(),
+        ),
         ("cxs.cmd", "@echo off\r\ncsx %*\r\n".to_string()),
     ];
     for (name, content) in launchers {

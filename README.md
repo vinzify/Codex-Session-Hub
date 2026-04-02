@@ -11,7 +11,8 @@ Agent Session Hub is a native Rust CLI that gives Codex CLI, Claude Code, and Op
 - `csx` for Codex sessions
 - `clx` for Claude sessions
 - `opx` for OpenCode sessions
-- One native binary surfaced as `csx`, `clx`, and `opx`
+- `sessionhub` for provider discovery and general help
+- One native binary surfaced as `sessionhub`, `csx`, `clx`, and `opx`
 - Shared browser model across all supported providers
 - Git-aware workspace grouping for repos, branches, and worktrees
 - Query filters for `title:`, `repo:`, and `branch:`
@@ -61,9 +62,18 @@ cd Agent-Session-Hub
 .\install.ps1
 ```
 
-The local install path builds the release binary with Cargo, installs `agent-session-hub`, `csx`, `clx`, `opx`, and `cxs`, and runs `csx install-shell` unless skipped.
+The local install path builds the release binary with Cargo, installs `agent-session-hub`, `sessionhub`, `csx`, `clx`, `opx`, and `cxs`, and runs `csx install-shell` unless skipped.
 
 ## Usage
+
+```sh
+sessionhub
+sessionhub providers
+sessionhub help
+sessionhub opencode browse title:landing
+```
+
+`sessionhub` is the generic discovery entrypoint. For daily shell-native resume flows, keep using `csx`, `clx`, or `opx`.
 
 ```sh
 csx

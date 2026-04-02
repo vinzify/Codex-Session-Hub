@@ -8,6 +8,10 @@ pub enum ProviderKind {
 }
 
 impl ProviderKind {
+    pub const fn all() -> [Self; 3] {
+        [Self::Codex, Self::Claude, Self::Opencode]
+    }
+
     pub fn parse(value: &str) -> Option<Self> {
         match value.trim().to_ascii_lowercase().as_str() {
             "" | "codex" => Some(Self::Codex),

@@ -21,9 +21,11 @@ irm https://github.com/vinzify/Agent-Session-Hub/releases/latest/download/instal
 The local source path builds the binary with Cargo and installs:
 
 - `agent-session-hub`
+- `sessionhub`
 - `csx`
 - `clx`
 - `opx`
+- `cxs`
 
 Example:
 

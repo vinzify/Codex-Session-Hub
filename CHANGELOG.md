@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.1
+
+- Added the generic `sessionhub` entrypoint for provider discovery and cross-provider help
+- Installed `sessionhub` alongside `csx`, `clx`, `opx`, and `cxs` in the public installers
+- Routed `fzf` preview and reload helpers through explicit provider flags so the generic entrypoint works inside the picker
+
 ## 0.3.0
 
 - Added OpenCode provider support with the new `opx` launcher

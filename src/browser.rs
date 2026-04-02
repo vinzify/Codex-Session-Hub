@@ -138,6 +138,7 @@ pub fn run_fzf(
     rows: &[String],
     exe: &std::path::Path,
 ) -> Result<Option<BrowserResult>> {
+    let provider_flag = format!("--provider {}", provider.name());
     let mut args = vec![
         "--ansi".to_string(),
         "--multi".to_string(),
@@ -152,7 +153,7 @@ pub fn run_fzf(
         "--nth".to_string(),
         "2".to_string(),
         "--preview".to_string(),
-        format!("'{}' __preview {{}}", exe.display()),
+        format!("'{}' {} __preview {{}}", exe.display(), provider_flag),
         "--preview-window".to_string(),
         "right:40%:wrap".to_string(),
         "--expect".to_string(),
@@ -163,9 +164,11 @@ pub fn run_fzf(
         },
         "--bind".to_string(),
         format!(
-            "start:reload-sync('{}' __query),change:reload-sync('{}' __query {{q}})+first",
+            "start:reload-sync('{}' {} __query),change:reload-sync('{}' {} __query {{q}})+first",
             exe.display(),
-            exe.display()
+            provider_flag,
+            exe.display(),
+            provider_flag
         ),
         "--header".to_string(),
         browser_header(provider),

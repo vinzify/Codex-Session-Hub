@@ -16,15 +16,154 @@ use std::fs;
 use std::io::{self, Write};
 use std::process::Command;
 
+fn normalized_argv0(argv0: &str) -> String {
+    let normalized = argv0.replace('\\', "/");
+    normalized
+        .rsplit('/')
+        .next()
+        .unwrap_or(argv0)
+        .trim_end_matches(".exe")
+        .to_ascii_lowercase()
+}
+
+fn is_generic_entrypoint(argv0: &str) -> bool {
+    matches!(normalized_argv0(argv0).as_str(), "sessionhub")
+}
+
+fn generic_provider(provider: ProviderKind) -> &'static str {
+    match provider {
+        ProviderKind::Codex => "codex",
+        ProviderKind::Claude => "claude",
+        ProviderKind::Opencode => "opencode",
+    }
+}
+
+fn generic_provider_from_arg(value: &str) -> Option<ProviderKind> {
+    match value.trim().to_ascii_lowercase().as_str() {
+        "codex" | "csx" => Some(ProviderKind::Codex),
+        "claude" | "clx" => Some(ProviderKind::Claude),
+        "opencode" | "opx" => Some(ProviderKind::Opencode),
+        _ => None,
+    }
+}
+
+fn prompt_for_provider() -> Result<Option<ProviderKind>> {
+    eprintln!("Select CLI to launch:");
+    for (index, provider) in ProviderKind::all().into_iter().enumerate() {
+        eprintln!(
+            "  {}. {} => {} ({})",
+            index + 1,
+            provider.launcher_name(),
+            provider.display_name(),
+            generic_provider(provider)
+        );
+    }
+
+    loop {
+        eprint!("Choice [1-3,q]: ");
+        io::stderr().flush()?;
+        let mut choice = String::new();
+        io::stdin().read_line(&mut choice)?;
+        let normalized = choice.trim().to_ascii_lowercase();
+        match normalized.as_str() {
+            "" | "q" | "quit" | "exit" => return Ok(None),
+            "1" | "csx" | "codex" => return Ok(Some(ProviderKind::Codex)),
+            "2" | "clx" | "claude" => return Ok(Some(ProviderKind::Claude)),
+            "3" | "opx" | "opencode" => return Ok(Some(ProviderKind::Opencode)),
+            _ => eprintln!("Unknown choice: {normalized}"),
+        }
+    }
+}
+
+fn generic_providers() {
+    println!("Available session commands:");
+    for provider in ProviderKind::all() {
+        let availability = if which::which(provider.binary_name()).is_ok() {
+            "available"
+        } else {
+            "missing"
+        };
+        println!(
+            "{} => {} ({}) [{}]",
+            provider.launcher_name(),
+            provider.display_name(),
+            generic_provider(provider),
+            availability
+        );
+    }
+}
+
+fn generic_usage() -> Result<()> {
+    println!("sessionhub");
+    println!("sessionhub providers");
+    println!("sessionhub <codex|claude|opencode> [query]");
+    println!("sessionhub <csx|clx|opx> [query]");
+    println!("sessionhub install-shell");
+    println!("sessionhub uninstall-shell");
+    println!();
+    generic_providers();
+    println!();
+    println!("Use `csx help`, `clx help`, or `opx help` for provider-specific commands.");
+    Ok(())
+}
+
+fn generic_dispatch(args: &[String]) -> Result<()> {
+    if args.is_empty() {
+        let Some(provider) = prompt_for_provider()? else {
+            return Ok(());
+        };
+        return dispatch(provider, &[]);
+    }
+
+    if args.first().map(|value| value.as_str()) == Some("--provider") {
+        if args.len() < 2 {
+            return Err(anyhow!("--provider requires a value"));
+        }
+        let provider = ProviderKind::parse(&args[1])
+            .ok_or_else(|| anyhow!("unsupported provider: {}", args[1]))?;
+        return dispatch(provider, &args[2..]);
+    }
+
+    match args[0].as_str() {
+        "help" | "--help" | "-h" => generic_usage(),
+        "providers" => {
+            generic_providers();
+            Ok(())
+        }
+        "doctor" => {
+            generic_providers();
+            println!();
+            println!(
+                "Use `csx doctor`, `clx doctor`, or `opx doctor` for provider-specific diagnostics."
+            );
+            Ok(())
+        }
+        "install-shell" => install_shell_command(ProviderKind::Codex),
+        "uninstall-shell" => uninstall_shell_command(ProviderKind::Codex),
+        _ => {
+            let explicit = generic_provider_from_arg(&args[0]);
+            let Some(provider) = explicit.or(prompt_for_provider()?) else {
+                return Ok(());
+            };
+            let provider_args = if explicit.is_some() { &args[1..] } else { args };
+            dispatch(provider, provider_args)
+        }
+    }
+}
+
 pub fn run() -> Result<()> {
     let argv = env::args().collect::<Vec<_>>();
     let argv0 = argv
         .first()
-        .map(|value| value.as_str())
-        .unwrap_or("agent-session-hub");
-    let inferred_provider = ProviderKind::alias_from_argv0(argv0);
+        .cloned()
+        .unwrap_or_else(|| "agent-session-hub".to_string());
     let mut args = argv.into_iter().skip(1).collect::<Vec<_>>();
 
+    if is_generic_entrypoint(&argv0) {
+        return generic_dispatch(&args);
+    }
+
+    let inferred_provider = ProviderKind::alias_from_argv0(&argv0);
     let mut provider = inferred_provider;
     if args.first().map(|value| value.as_str()) == Some("--provider") {
         if args.len() < 2 {
@@ -424,7 +563,7 @@ fn uninstall_shell_command(_provider: ProviderKind) -> Result<()> {
     if cfg!(windows) {
         let profile_path = uninstall_powershell_shell_integration()?;
         let launcher_root = crate::paths::launcher_root();
-        for name in ["csx.cmd", "clx.cmd", "opx.cmd", "cxs.cmd"] {
+        for name in ["csx.cmd", "clx.cmd", "opx.cmd", "sessionhub.cmd", "cxs.cmd"] {
             let path = launcher_root.join(name);
             if path.exists() {
                 let _ = fs::remove_file(path);
@@ -504,5 +643,26 @@ mod tests {
             ProviderKind::alias_from_argv0("opx"),
             ProviderKind::Opencode
         );
+    }
+
+    #[test]
+    fn sessionhub_entrypoint_is_generic() {
+        assert!(is_generic_entrypoint("sessionhub"));
+        assert!(is_generic_entrypoint("/tmp/sessionhub"));
+        assert!(!is_generic_entrypoint("csx"));
+    }
+
+    #[test]
+    fn generic_provider_aliases_work() {
+        assert_eq!(generic_provider_from_arg("csx"), Some(ProviderKind::Codex));
+        assert_eq!(
+            generic_provider_from_arg("claude"),
+            Some(ProviderKind::Claude)
+        );
+        assert_eq!(
+            generic_provider_from_arg("opx"),
+            Some(ProviderKind::Opencode)
+        );
+        assert_eq!(generic_provider_from_arg("unknown"), None);
     }
 }

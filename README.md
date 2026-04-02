@@ -130,10 +130,6 @@ cd Agent-Session-Hub
 - `src/shell.rs`: shell integration for bash, zsh, fish, PowerShell, and Windows `cmd`
 - `src/provider.rs`: provider metadata and runtime behavior
 
-## Launching It
-
-For ready-to-post launch copy and demo checklist ideas, see [docs/launch.md](./docs/launch.md).
-
 ## Contributing
 
 Start with [CONTRIBUTING.md](./CONTRIBUTING.md).

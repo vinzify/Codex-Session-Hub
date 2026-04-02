@@ -71,6 +71,7 @@ opx delete <session-id>
 | Fuzzy search with `fzf` | Varies | Yes |
 | Preview pane before resume | Rare | Yes |
 | Resume from the matching project directory | Varies | Yes |
+| Repo and branch-aware grouping | No | Yes |
 | Rename and reset session aliases | Rare | Yes |
 | Delete from the picker | Varies | Yes |
 

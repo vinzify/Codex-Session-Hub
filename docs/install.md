@@ -25,7 +25,6 @@ The local source path builds the binary with Cargo and installs:
 - `csx`
 - `clx`
 - `opx`
-- `cxs`
 
 Example:
 

@@ -22,7 +22,6 @@ Or on Windows:
 ## Notes
 
 - The public commands are `sessionhub`, `csx`, `clx`, and `opx`
-- The legacy alias `cxs` still maps to `csx`
 - The Rust runtime lives under `src/*.rs`
 - `cargo test` is the test entrypoint
 

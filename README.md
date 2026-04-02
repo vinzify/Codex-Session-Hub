@@ -36,7 +36,6 @@ The public installer downloads the matching release binary for your platform and
 - `csx`
 - `clx`
 - `opx`
-- `cxs` as a legacy alias that forwards to `csx`
 
 ## Use It In 10 Seconds
 
@@ -100,8 +99,6 @@ That shell integration keeps the direct launchers shell-native for resume flows:
 - select a session
 - change into the matching project directory when possible
 - reopen the session with `codex`, `claude`, or `opencode`
-
-If you used the old PowerShell-era releases, `cxs` is just the old shortcut for Codex and still forwards to `csx`.
 
 To remove shell integration:
 

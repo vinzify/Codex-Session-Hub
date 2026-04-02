@@ -147,7 +147,6 @@ function Install-AshBinary {
     Set-Content -Path (Join-Path $ResolvedBinRoot 'clx.cmd') -Value ($cmdTemplate -f 'claude')
     Set-Content -Path (Join-Path $ResolvedBinRoot 'opx.cmd') -Value ($cmdTemplate -f 'opencode')
     Set-Content -Path (Join-Path $ResolvedBinRoot 'sessionhub.cmd') -Value "@echo off`r`n`"%~dp0agent-session-hub.exe`" %*`r`n"
-    Set-Content -Path (Join-Path $ResolvedBinRoot 'cxs.cmd') -Value "@echo off`r`ncsx %*`r`n"
 
     return $installedBinary
 }

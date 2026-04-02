@@ -1,9 +1,14 @@
 # Changelog
 
+## 0.3.2
+
+- Removed the deprecated `cxs` alias to keep the public command surface focused on `sessionhub`, `csx`, `clx`, and `opx`
+- Cleaned installers, shell integration, and docs to match the simplified launcher set
+
 ## 0.3.1
 
 - Added the generic `sessionhub` entrypoint for provider discovery and cross-provider help
-- Installed `sessionhub` alongside `csx`, `clx`, `opx`, and `cxs` in the public installers
+- Installed `sessionhub` alongside `csx`, `clx`, and `opx` in the public installers
 - Routed `fzf` preview and reload helpers through explicit provider flags so the generic entrypoint works inside the picker
 
 ## 0.3.0
@@ -43,7 +48,7 @@
 - Added GitHub Actions CI for Rust and release automation for one-line install artifacts
 - Removed the legacy PowerShell module, shims, and Pester test suite
 - Updated install flows to consume native GitHub Release archives
-- Added Windows `cmd` launchers and retained the `cxs` alias
+- Added Windows `cmd` launchers for the Rust-native CLI
 - Updated docs and contributor guidance for the Rust-native release process
 
 ## 0.1.0

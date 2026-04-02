@@ -563,7 +563,7 @@ fn uninstall_shell_command(_provider: ProviderKind) -> Result<()> {
     if cfg!(windows) {
         let profile_path = uninstall_powershell_shell_integration()?;
         let launcher_root = crate::paths::launcher_root();
-        for name in ["csx.cmd", "clx.cmd", "opx.cmd", "sessionhub.cmd", "cxs.cmd"] {
+        for name in ["csx.cmd", "clx.cmd", "opx.cmd", "sessionhub.cmd"] {
             let path = launcher_root.join(name);
             if path.exists() {
                 let _ = fs::remove_file(path);

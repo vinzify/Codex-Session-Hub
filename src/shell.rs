@@ -214,7 +214,6 @@ pub fn install_cmd_launchers(exe_path: &Path) -> Result<PathBuf> {
             "sessionhub.cmd",
             "@echo off\r\n\"%~dp0agent-session-hub.exe\" %*\r\n".to_string(),
         ),
-        ("cxs.cmd", "@echo off\r\ncsx %*\r\n".to_string()),
     ];
     for (name, content) in launchers {
         let path = launcher_root.join(name);
@@ -231,7 +230,7 @@ pub fn install_posix_shell_integration(shell_name: Option<&str>) -> Result<Shell
 
     let block = if profile_path.ends_with("config.fish") || shell_name == Some("fish") {
         format!(
-            "{MARKER_START}\nset -gx PATH \"{}\" $PATH\n{}\n{}\n{}\nfunction cxs\n    csx $argv\nend\n{MARKER_END}",
+            "{MARKER_START}\nset -gx PATH \"{}\" $PATH\n{}\n{}\n{}\n{MARKER_END}",
             launcher_root.display(),
             fish_function("csx"),
             fish_function("clx"),
@@ -266,7 +265,6 @@ pub fn powershell_profile_block(exe_path: &Path) -> String {
 {}
 {}
 {}
-Set-Alias cxs csx
 {MARKER_END}"#,
         powershell_function("csx", "codex", &exe),
         powershell_function("clx", "claude", &exe),

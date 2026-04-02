@@ -93,8 +93,7 @@ install_binary() {
   cp "${INSTALL_ROOT}/bin/agent-session-hub" "${BIN_ROOT}/clx"
   cp "${INSTALL_ROOT}/bin/agent-session-hub" "${BIN_ROOT}/opx"
   cp "${INSTALL_ROOT}/bin/agent-session-hub" "${BIN_ROOT}/sessionhub"
-  cp "${INSTALL_ROOT}/bin/agent-session-hub" "${BIN_ROOT}/cxs"
-  chmod +x "${BIN_ROOT}/csx" "${BIN_ROOT}/clx" "${BIN_ROOT}/opx" "${BIN_ROOT}/sessionhub" "${BIN_ROOT}/cxs"
+  chmod +x "${BIN_ROOT}/csx" "${BIN_ROOT}/clx" "${BIN_ROOT}/opx" "${BIN_ROOT}/sessionhub"
 }
 
 run_shell_install() {

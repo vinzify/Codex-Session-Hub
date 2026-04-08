@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.5
+
+- Fixed PowerShell shell integration to add the Agent Session Hub launcher directory to `PATH`, so `sessionhub` resolves after reloading the profile
+
 ## 0.3.4
 
 - Fixed Windows installation when the default shim directory and install directory resolve to the same `bin` path

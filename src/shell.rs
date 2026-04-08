@@ -260,8 +260,17 @@ pub fn uninstall_posix_shell_integration() -> Result<PathBuf> {
 
 pub fn powershell_profile_block(exe_path: &Path) -> String {
     let exe = exe_path.display().to_string();
+    let launcher_root = exe_path
+        .parent()
+        .unwrap_or(exe_path)
+        .display()
+        .to_string()
+        .replace('\'', "''");
     format!(
         r#"{MARKER_START}
+if (($env:Path -split ';') -notcontains '{launcher_root}') {{
+    $env:Path = "{launcher_root};$env:Path"
+}}
 {}
 {}
 {}
@@ -291,6 +300,7 @@ mod tests {
     #[test]
     fn powershell_block_passes_through_management_commands() {
         let block = powershell_profile_block(Path::new("/tmp/agent-session-hub"));
+        assert!(block.contains("$env:Path = \"/tmp;$env:Path\""));
         assert!(block.contains("--provider codex @args"));
         assert!(block.contains("--provider opencode __select @args"));
         assert!(block.contains("--provider opencode --resume"));

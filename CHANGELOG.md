@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.4
+
+- Fixed Windows installation when the default shim directory and install directory resolve to the same `bin` path
+
 ## 0.3.3
 
 - Fixed PowerShell one-line installation so `irm .../install.ps1 | iex` works under `Invoke-Expression`

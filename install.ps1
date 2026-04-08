@@ -142,7 +142,10 @@ function Install-AshBinary {
 
     $installedBinary = Join-Path $installBinRoot 'agent-session-hub.exe'
     Copy-Item -Path $BinaryPath -Destination $installedBinary -Force
-    Copy-Item -Path $installedBinary -Destination (Join-Path $ResolvedBinRoot 'agent-session-hub.exe') -Force
+    $shimBinaryPath = Join-Path $ResolvedBinRoot 'agent-session-hub.exe'
+    if ($installedBinary -ne $shimBinaryPath) {
+        Copy-Item -Path $installedBinary -Destination $shimBinaryPath -Force
+    }
     $cmdTemplate = @'
 @echo off
 "%~dp0agent-session-hub.exe" --provider {0} %*

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.3
+
+- Fixed PowerShell one-line installation so `irm .../install.ps1 | iex` works under `Invoke-Expression`
+- Fixed Linux shell profile detection during shell integration setup
+
 ## 0.3.2
 
 - Removed the deprecated `cxs` alias to keep the public command surface focused on `sessionhub`, `csx`, `clx`, and `opx`

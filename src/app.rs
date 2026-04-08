@@ -490,11 +490,11 @@ fn resume_provider(
     session_id: &str,
     project_path: Option<&str>,
 ) -> Result<()> {
-    which::which(provider.binary_name())
+    let provider_binary = which::which(provider.binary_name())
         .with_context(|| format!("{} was not found in PATH.", provider.binary_name()))?;
     match provider {
         ProviderKind::Codex => {
-            let mut command = Command::new("codex");
+            let mut command = Command::new(&provider_binary);
             command.arg("resume");
             if let Some(project_path) = project_path.filter(|value| !value.trim().is_empty()) {
                 command.arg("--cd").arg(project_path);
@@ -506,7 +506,7 @@ fn resume_provider(
             }
         }
         ProviderKind::Claude => {
-            let mut command = Command::new("claude");
+            let mut command = Command::new(&provider_binary);
             command.arg("--resume").arg(session_id);
             if let Some(project_path) = project_path.filter(|value| !value.trim().is_empty()) {
                 command.current_dir(project_path);
@@ -517,7 +517,7 @@ fn resume_provider(
             }
         }
         ProviderKind::Opencode => {
-            let mut command = Command::new("opencode");
+            let mut command = Command::new(&provider_binary);
             command.arg("--session").arg(session_id);
             if let Some(project_path) = project_path.filter(|value| !value.trim().is_empty()) {
                 command.current_dir(project_path);

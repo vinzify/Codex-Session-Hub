@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.6
+
+- Fixed Windows `fzf` preview and query reload commands to quote the installer binary correctly
+- Fixed provider resume launches to execute the resolved provider binary path directly on Windows
+
 ## 0.3.5
 
 - Fixed PowerShell shell integration to add the Agent Session Hub launcher directory to `PATH`, so `sessionhub` resolves after reloading the profile

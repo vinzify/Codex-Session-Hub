@@ -29,6 +29,15 @@ fn row_key(provider: ProviderKind, session_id: &str) -> String {
     format!("S:{}:{session_id}", provider.name())
 }
 
+fn fzf_shell_command(exe: &std::path::Path, command: &str) -> String {
+    let exe_text = exe.display().to_string();
+    if cfg!(windows) {
+        format!("\"{exe_text}\" {command}")
+    } else {
+        format!("'{}' {command}", exe_text)
+    }
+}
+
 fn workspace_row_key(provider: ProviderKind, workspace_key: &str) -> String {
     format!("W:{}:{}", provider.name(), workspace_key)
 }
@@ -153,7 +162,7 @@ pub fn run_fzf(
         "--nth".to_string(),
         "2".to_string(),
         "--preview".to_string(),
-        format!("'{}' {} __preview {{}}", exe.display(), provider_flag),
+        fzf_shell_command(exe, &format!("{provider_flag} __preview {{}}")),
         "--preview-window".to_string(),
         "right:40%:wrap".to_string(),
         "--expect".to_string(),
@@ -164,11 +173,9 @@ pub fn run_fzf(
         },
         "--bind".to_string(),
         format!(
-            "start:reload-sync('{}' {} __query),change:reload-sync('{}' {} __query {{q}})+first",
-            exe.display(),
-            provider_flag,
-            exe.display(),
-            provider_flag
+            "start:reload-sync({}),change:reload-sync({})+first",
+            fzf_shell_command(exe, &format!("{provider_flag} __query")),
+            fzf_shell_command(exe, &format!("{provider_flag} __query {{q}}"))
         ),
         "--header".to_string(),
         browser_header(provider),

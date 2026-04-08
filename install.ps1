@@ -31,28 +31,32 @@ function Test-AshLocalSource {
     return (Test-Path (Join-Path $Path 'Cargo.toml')) -and (Test-Path (Join-Path $Path 'src/main.rs'))
 }
 
-function Get-AshScriptRoot {
+function Get-AshInvocationPath {
     if ($PSCommandPath) {
-        return (Split-Path -Parent $PSCommandPath)
+        return $PSCommandPath
     }
 
-    if ($MyInvocation.MyCommand.Path) {
-        return (Split-Path -Parent $MyInvocation.MyCommand.Path)
+    if ($null -ne $MyInvocation.MyCommand) {
+        $pathProperty = $MyInvocation.MyCommand.PSObject.Properties['Path']
+        if ($pathProperty -and $pathProperty.Value) {
+            return [string]$pathProperty.Value
+        }
+    }
+
+    return $null
+}
+
+function Get-AshScriptRoot {
+    $invocationPath = Get-AshInvocationPath
+    if ($invocationPath) {
+        return (Split-Path -Parent $invocationPath)
     }
 
     return (Get-Location).Path
 }
 
 function Test-AshHasFileBackedInvocation {
-    if ($PSCommandPath) {
-        return $true
-    }
-
-    if ($MyInvocation.MyCommand.Path) {
-        return $true
-    }
-
-    return $false
+    return ($null -ne (Get-AshInvocationPath))
 }
 
 function Get-AshWindowsTarget {
